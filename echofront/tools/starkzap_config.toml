@@ -1,0 +1,116 @@
+# ECHOFRONT - StarkZap Configuration
+# Скеффолд, деплой, тести для Dojo Engine
+
+[project]
+name = "echofront"
+version = "0.1.0"
+description = "Cooperative Defense + Base Evolution On-Chain Game"
+license = "MIT"
+
+[dojo]
+world_address = ""  # Will be populated after deploy
+world_class_hash = ""
+executor_class_hash = ""
+
+[contracts]
+# Core contracts
+base_manager = { path = "contracts/base_manager.cairo" }
+tech_dag = { path = "contracts/tech_dag.cairo" }
+module_registry = { path = "contracts/module_registry.cairo" }
+wave_engine = { path = "contracts/wave_engine.cairo" }
+progress_tracker = { path = "contracts/progress_tracker.cairo" }
+economy_royalties = { path = "contracts/economy_royalties.cairo" }
+
+[environment]
+# Default environment
+default = "local"
+
+[environments.local]
+rpc_url = "http://localhost:5050"
+account_address = "0x127fd5f1fe78a71f8bcd1fec63e3fe2f0486b5ecd4be279e421842010f8c780"
+private_key = "0xc5b2fcab997346f3ea1c00b002ecf6f382c5f9c9659a3894eb783c5320f912"
+wait_timeout = 300
+
+[environments.sepolia]
+rpc_url = "https://starknet-sepolia.public.blastapi.io"
+account_address = ""  # Set via environment variable
+private_key = ""  # Set via environment variable
+wait_timeout = 600
+
+[environments.mainnet]
+rpc_url = "https://starknet-mainnet.public.blastapi.io"
+account_address = ""  # Set via environment variable
+private_key = ""  # Set via environment variable
+wait_timeout = 900
+
+[cartridge]
+# Cartridge Controller configuration
+namespace = "echofront"
+session_keys_enabled = true
+gasless_enabled = true
+
+# Session key policies
+[[cartridge.policies]]
+contract = "base_manager"
+entrypoints = ["create_base", "install_module", "remove_module", "upgrade_base"]
+max_calls_per_minute = 10
+
+[[cartridge.policies]]
+contract = "tech_dag"
+entrypoints = ["unlock_tech", "add_new_tech"]
+max_calls_per_minute = 5
+
+[[cartridge.policies]]
+contract = "wave_engine"
+entrypoints = ["submit_wave_result"]
+max_calls_per_minute = 2
+
+[[cartridge.policies]]
+contract = "module_registry"
+entrypoints = ["register_module", "validate_module"]
+max_calls_per_minute = 5
+
+[torii]
+# Torii indexer configuration
+enabled = true
+port = 8080
+ws_port = 9090
+allowed_origins = ["*"]
+
+# Entities to index
+[[torii.indexing.contracts]]
+name = "BaseManager"
+events = ["BaseCreated", "ModuleInstalled", "ModuleRemoved", "BaseUpgraded"]
+
+[[torii.indexing.contracts]]
+name = "TechDAG"
+events = ["TechUnlocked", "EdgeCreated", "ProgressUpdated"]
+
+[[torii.indexing.contracts]]
+name = "WaveEngine"
+events = ["WaveStarted", "WaveCompleted", "ProofSubmitted", "ModuleDropped"]
+
+[[torii.indexing.contracts]]
+name = "ModuleRegistry"
+events = ["ModuleRegistered", "SynergyCreated", "ModuleValidated", "RoyaltyPaid"]
+
+[[torii.indexing.contracts]]
+name = "ProgressTracker"
+events = ["AchievementUnlocked", "AchievementClaimed", "SeasonStarted", "SeasonEnded"]
+
+[[torii.indexing.contracts]]
+name = "EconomyRoyalties"
+events = ["RoyaltyCollected", "RoyaltyDistributed", "GuildCreated", "TokensBurned"]
+
+[test]
+# Test configuration
+test_runner = "snforge"
+coverage = true
+profile = "dev"
+
+[build]
+# Build configuration
+cairo_version = "1.0"
+optimize = true
+sierra = true
+casm = true
