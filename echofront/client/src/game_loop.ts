@@ -3,9 +3,15 @@
  * 
  * Off-chain game simulation with periodic on-chain state commits.
  * Commits every 45 seconds or at wave end.
+ * 
+ * Features:
+ * - Batched transactions for gas efficiency
+ * - Retry logic with exponential backoff
+ * - Session key management with fallback
+ * - Gas limit checks before submission
  */
 
-import { Account, CallData, RpcProvider } from 'starknet';
+import { Account, CallData, RpcProvider, Contract, Abi } from 'starknet';
 import { Controller } from '@cartridge/controller';
 import { createClient } from '@dojoengine/core';
 import type { SchemaType } from '../contracts/types';
@@ -17,6 +23,9 @@ import type { SchemaType } from '../contracts/types';
 const COMMIT_INTERVAL_MS = 45000; // 45 seconds
 const WAVE_TIMEOUT_MS = 300000; // 5 minutes
 const MAX_BATCH_SIZE = 100;
+const MAX_RETRIES = 3;
+const BASE_RETRY_DELAY_MS = 1000; // 1 second
+const GAS_LIMIT_PER_WAVE = 1200000; // 1.2M gas units threshold
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types
@@ -66,6 +75,13 @@ type GameAction =
   | { type: 'UNLOCK_TECH'; techId: number }
   | { type: 'COMPLETE_WAVE'; score: number; modulesUsed: number[] };
 
+interface SessionKeyStatus {
+  isValid: boolean;
+  expiry?: number;
+  remainingCalls?: number;
+  maxFee?: bigint;
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Game Loop Class
 // ────────────────────────────────────────────────────────────────────────────
@@ -80,6 +96,16 @@ export class EchofrontGameLoop {
   private controller: Controller | null = null;
   private dojoClient: any = null;
   private provider: RpcProvider;
+  private sessionKeyStatus: SessionKeyStatus | null = null;
+  
+  // Gas tracking
+  private estimatedGasPerAction: Map<string, number> = new Map([
+    ['INSTALL_MODULE', 85000],
+    ['REMOVE_MODULE', 65000],
+    ['UPGRADE_BASE', 95000],
+    ['UNLOCK_TECH', 72000],
+    ['COMPLETE_WAVE', 280000],
+  ]);
 
   constructor(rpcUrl: string) {
     this.provider = new RpcProvider({ nodeUrl: rpcUrl });

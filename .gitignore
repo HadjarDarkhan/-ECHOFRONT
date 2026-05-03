@@ -1,28 +1,27 @@
 ```
 # Dependencies
 node_modules/
-venv/
-.venv/
-__pycache__/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
 
 # Build artifacts
 dist/
 build/
 target/
+
+# Python
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.class
-*.o
-*.obj
-*.so
-*.dll
-*.exe
+.Python
+env/
+venv/
+.venv/
+.venv*/
 
-# Environment
+# Logs
+*.log
+
+# Environment variables
 .env
 .env.local
 .env.*
@@ -32,21 +31,17 @@ target/
 .idea/
 *.swp
 *.swo
-*.tmp
 
-# Logs
-*.log
+# OS
+.DS_Store
+Thumbs.db
 
 # Coverage
 coverage/
 htmlcov/
 .coverage
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Compressed files
+# Compression
 *.zip
 *.gz
 *.tar
@@ -65,4 +60,52 @@ Thumbs.db
 *.Z
 *.lz
 *.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+
+# Rust/Cargo (if applicable)
+Cargo.lock
+target/
+
+# Go (if applicable)
+*.o
+*.a
+*.out
+*.test
+
+# Java/Maven/Gradle (if applicable)
+*.class
+*.jar
+*.war
+*.ear
+target/
+.gradle/
+
+# C/C++ (if applicable)
+*.so
+*.dll
+*.dylib
+*.obj
+*.a
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.nyc_output/
+coverage.xml
+
+# GitHub
+.github/
+
+# Tools and simulation outputs
+echofront/tools/*.json
+echofront/tools/*.png
 ```
